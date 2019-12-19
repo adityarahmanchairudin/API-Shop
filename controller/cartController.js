@@ -35,3 +35,75 @@ exports.addToCart = async (req,res) => {
     }
     }
 
+const showDataCart = async (idUser) => {
+    const data = await Cart.find({ userCart : idUser}).populate('productCart').lean()
+    data.forEach(row => {
+        row.subTotal = Number.parseInt(row.productCart.price) * row.qtyCart
+    })
+    return data
+}
+
+exports.showCart = async (req,res) =>{
+    const idUser = req.params.id
+    const data = await showDataCart(idUser)
+    res.send(JSON.stringify({"status": 200, "error" : null, "response" : data}))
+}
+
+exports.editCart = async (req,res) => {
+    const userCart = req.params.id
+    const productCart = req.body.productCart
+    const qty = Number.parseInt(req.body.qtyCart)
+    if(qty > 0){
+        const dataCart = await Cart.findOneAndUpdate({userCart : userCart, productCart : productCart},{qtyCart : qty})
+    }else if(qty <= 0){
+        const deleteCart = await Cart.findByIdAndDelete({ userCart : userCart, productCart : productCart
+        })
+    }
+    const data = await showDataCart(userCart)
+    res.send(JSON.stringify({"status" : 200, "error" : null, "response" : data}))
+}
+
+exports.deleteCart = async (req,res) =>{
+    const userCart = req.params.id
+    const productCart = req.body.productCart
+    const deleteCart = await Cart.findByIdAndDelete({userCart : userCart, productCart: productCart})
+    const data = await showDataCart(userCart)
+    res.send(JSON.stringify({"status": 200, "error" : null, "response" : data}))
+}
+
+exports.removeCart = async (req,res) => {
+    const userCart = req.params.id
+    const hapusCart = await Cart.deleteMany({userCart : userCart})
+    res.send(JSON.stringify({"status" : 200, "error" : null, "response" : "Cart Deleted"}))
+}
+
+exports.checkOut = async (req,res) => {
+    const userCart = req.params.id
+    const dataCart = await Cart.count({userCart : userCart})
+    if(dataCart <= 0){
+        res.status(400)
+    }else{
+        let total = 0
+        const data = await showDataCart(userCart)
+        data.forEach(row => {
+            total = total + row.subTotal
+        })
+        const dataSave = {
+            userOrder : userCart,
+            totalOrder : total
+        }
+
+        data.forEach(async rows => {
+            const dataDetail = {
+                idOrder : saveOrder._id,
+                productOrder : rows.productCart._id,
+                qtyOrder : rows.qtyCart,
+                subTotalOrder : rows.subTotal
+            }
+            const details = new OrderDetail(dataDetail)
+            const saveDetail = await details.save()
+        })
+        const hapusCart = await Cart.deleteMany({userCart : userCart})
+        res.send(JSON.stringify({ "status" : 200, "error" : null, "response" : "Alhamdulillah dapet Rejeki"}))
+    }
+}

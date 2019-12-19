@@ -23,4 +23,11 @@ module.exports = app => {
 
     //api cart
     app.post('/cart/:id', cartController.addToCart)
+    app.get('/cart/:id', cartController.showCart)
+    app.put('/cart/:id', cartController.editCart)
+    app.delete('/cart/:id', cartController.deleteCart)
+    app.get('/cart/remove/:id', cartController.removeCart)
+
+    //api checkout
+    app.get('/cart/checkout/:id', cartController.checkOut)
 }
